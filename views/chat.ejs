@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h1>Chat Room</h1>
+    <div id="chat-box">
+        <% messages.forEach(message => { %>
+            <div class="message">
+                <p><strong><%= message.username %>:</strong> <%= message.message %> (<%= message.timestamp.toLocaleString() %>)</p>
+                <% if (message.image) { %>
+                    <img src="<%= message.image %>" alt="Image" width="150">
+                <% } %>
+                <% if (message.description) { %>
+                    <p><strong>Description:</strong> <%= message.description %></p>
+                <% } %>
+                <% if (message.price) { %>
+                    <p><strong>Price:</strong> $<%= message.price %></p>
+                <% } %>
+                <% if (message.rating) { %>
+                    <p><strong>Rating:</strong> <%= message.rating %>/5</p>
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
+
+    <form id="message-form">
+        <input type="text" id="username-input" placeholder="Enter your name" required>
+        <input type="text" id="message-input" placeholder="Type a message" required>
+        <input type="text" id="description-input" placeholder="Enter description" required>
+        <input type="number" id="price-input" placeholder="Enter price" step="0.01" min="0" required>
+        <input type="number" id="rating-input" placeholder="Enter rating (1-5)" min="1" max="5" required>
+        <input type="url" id="image-input" placeholder="Enter image URL">
+        <button type="submit">Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        document.getElementById('message-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const data = {
+                username: document.getElementById('username-input').value,
+                message: document.getElementById('message-input').value,
+                description: document.getElementById('description-input').value,
+                price: parseFloat(document.getElementById('price-input').value),
+                rating: parseInt(document.getElementById('rating-input').value),
+                image: document.getElementById('image-input').value
+            };
+
+            socket.emit('newMessage', data);
+
+            document.getElementById('message-input').value = '';
+            document.getElementById('description-input').value = '';
+            document.getElementById('price-input').value = '';
+            document.getElementById('rating-input').value = '';
+            document.getElementById('image-input').value = '';
+        });
+
+        socket.on('newMessage', (data) => {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+
+            if (data.image) {
+                messageElement.innerHTML += `<img src="${data.image}" alt="Image" width="150">`;
+            }
+            if (data.description) {
+                messageElement.innerHTML += `<p><strong>Description:</strong> ${data.description}</p>`;
+            }
+            if (data.price) {
+                messageElement.innerHTML += `<p><strong>Price:</strong> $${data.price}</p>`;
+            }
+            if (data.rating) {
+                messageElement.innerHTML += `<p><strong>Rating:</strong> ${data.rating}/5</p>`;
+            }
+
+            chatBox.appendChild(messageElement);
+        });
+    </script>
+</body>
+</html>
